@@ -1,0 +1,10 @@
+syntax: glob
+
+*.pyc
+*~
+copperhead/thrust/thrust
+.DS_Store
+build
+stage
+.sconsign*
+distribute*.tar.gz
