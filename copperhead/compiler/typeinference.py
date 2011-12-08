@@ -265,12 +265,15 @@ class ConstraintGenerator(AST.SyntaxFlattener):
         self.context = context or TypingContext()
 
     def _Number(self, ast):
-        t = T.Number
-        if isinstance(ast.val, int):     t = T.Int
-        elif isinstance(ast.val, float): t = T.Float
-
-        yield Equality(ast.type, t, ast)
-
+        t = None
+        if isinstance(ast.val, int):     t = T.Long
+        elif isinstance(ast.val, float): t = T.Double
+        if t:
+            yield Equality(ast.type, t, ast)
+        #If we get here, this number has had its type stripped
+            
+        #Do not make any claims about its Copperhead type
+        
     def _Name(self, ast):
         if ast.id is 'True' or ast.id is 'False':
             yield Equality(ast.type, T.Bool, ast)
@@ -761,11 +764,21 @@ class TypeGlobalizer(AST.SyntaxRewrite):
     def __init__(self, context):
         self.context = context
     def _Name(self, ast):
+        # Get global types
         if ast.id in self.context.globals:
             obj = self.context.globals[ast.id]
             t = getattr(obj, 'cu_type', None)
             if isinstance(t, T.Type):
                 ast.type = t
+        elif ast.id in self.context.typings:
+            # Record types of procedures scope
+            ast.type = self.context.typings[ast.id]
+        return ast
+    def _Closure(self, ast):
+        self.rewrite_children(ast)
+        # if the body of the closure is a name, reflect the type up
+        if isinstance(ast.body(), AST.Name):
+            ast.type = ast.body().type
         return ast
         
 def globalize(P, context):

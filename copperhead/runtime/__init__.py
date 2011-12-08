@@ -32,8 +32,7 @@ try:
     include_path = os.path.join(
         os.path.dirname(
             os.path.dirname(
-                os.path.dirname(
-                    os.path.abspath(__file__)))),
+                os.path.abspath(__file__))),
                     'library')
     host_toolchain.add_library('copperhead', [include_path], [], [])
     nvcc_toolchain = codepy.toolchain.guess_nvcc_toolchain()
@@ -46,7 +45,7 @@ try:
     import sys
     if sys.platform == 'darwin':
         nvcc_toolchain.cflags.append('-m64')
-
+    nvcc_toolchain.cflags.extend(['-Xcompiler', '-fPIC'])
 
     #If you see a '-framework' in the libraries, skip it
     # and its successor

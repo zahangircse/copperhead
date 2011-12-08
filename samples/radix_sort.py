@@ -21,13 +21,13 @@ import plac
 @cu
 def radix_sort_iteration(A, lsb):
     def delta(flag, ones_before, zeros_after):
-        if flag==0:  return -ones_before
+        if flag==implicit(0):  return -ones_before
         else:        return +zeros_after
 
     
-    flags = map(lambda x: (x>>lsb)&1, A)
+    flags = map(lambda x: (x>>lsb)&implicit(1), A)
     ones  = scan(op_add, flags)
-    zeros = rscan(op_add, [f^1 for f in flags])
+    zeros = rscan(op_add, [f^implicit(1) for f in flags])
     
     offsets = map(delta, flags, ones, zeros)
         
@@ -45,6 +45,7 @@ def radix_sort(A, bits, lsb):
     """
     for bit in xrange(lsb, bits):
         A = radix_sort_iteration(A, bit)
+
     return A
 
 def radix_sort8(A):   return radix_sort(A, 8, 0)
@@ -66,7 +67,7 @@ def main(n=277):
             gold     = sorted(data_in)
             data_out = S(data_in)
 
-            if gold==data_out:
+            if gold == data_out:
                 npass = npass+1
             else:
                 nfail = nfail+1

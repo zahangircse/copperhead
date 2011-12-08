@@ -16,6 +16,9 @@ import coresyntax as S
 # XXX It would be nice to create this table automatically from the
 # definition of type_base
 
+# XXX Alternatively, it'd be great to make a metaclass that did this
+# for us
+
 which_to_back = {
    0 : ET.retrieve_monotype_t,
    1 : ET.retrieve_polytype_t,
@@ -126,10 +129,13 @@ def front_to_back_node(x):
         body = front_to_back_node(x.body())
         lamb = ES.Lambda(ES.Tuple(args), body)
         lamb.type = front_to_back_type(x.type)
+        return lamb
     elif isinstance(x, S.Closure):
         closed_over = [front_to_back_node(y) for y in x.closed_over()]
         body = front_to_back_node(x.body())
-        return ES.Closure(ES.Tuple(closed_over), body)
+        closure = ES.Closure(ES.Tuple(closed_over), body)
+        closure.type = front_to_back_type(x.type)
+        return closure
     elif isinstance(x, S.Procedure):
         name = front_to_back_node(x.name())
         formals = [front_to_back_node(y) for y in x.formals()]
