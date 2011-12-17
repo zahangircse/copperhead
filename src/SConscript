@@ -1,0 +1,73 @@
+import os
+import inspect
+import fnmatch
+
+# try to import an environment first
+
+Import('env')
+env = env.Clone()
+
+Import('libcopperhead')
+
+#XXX This shouldn't be hardcoded. Fix!
+if env['PLATFORM'] == 'darwin':
+    env.Append(CPPPATH = ["/Users/catanzar/boost_1_47_0"])
+    env.Append(LIBPATH=["/Users/catanzar/boost_1_47_0/stage/lib"])
+    env.Append(LINKFLAGS=['-F/System/Library/Frameworks/', '-framework', 'Python'])
+    
+
+abscur = os.path.abspath(os.curdir)
+parent, current = os.path.split(os.path.abspath(os.curdir))
+backend_dir = os.path.join(parent, 'backend')
+backend_inc_dir = os.path.join(backend_dir, 'inc')
+env.Append(CPPPATH = [backend_inc_dir])
+
+env.Append(CPPPATH = ["/usr/include/python2.7"])
+env.Append(LIBS = ['boost_python'])
+
+cppenv = env.Clone()
+cudaenv = env.Clone()
+
+
+cppenv.Append(CCFLAGS = ["-std=c++0x", "-Wall", "-O3"])
+libcopperhead_path, tail = os.path.split(str(libcopperhead[0]))
+cppenv.Append(LIBPATH = [libcopperhead_path])
+cppenv.Append(LIBS = ["copperhead"])
+
+if env['PLATFORM'] == 'darwin':
+    cudaenv.Append(CPPPATH = ["/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/numpy/core/include"])
+else:
+    cudaenv.Append(CPPPATH = ["/usr/lib/pymodules/python2.7/numpy/core/include"])    
+
+
+cudaenv.Append(LIBS = ['cudart'])
+cudaenv.Append(CPPPATH = [os.path.join(backend_dir,
+                                         os.path.join('library', 'prelude'))])
+
+
+cudata_object = cudaenv.SharedObject('copperhead/runtime/cudata_impl.cu')
+cudaenv_host = cudaenv.Clone()
+cudaenv_host.Append(CCFLAGS = ["-std=c++0x", "-Wall", "-O3"])
+cudaenv_host.Append(LIBPATH = [libcopperhead_path])
+cudaenv_host.Append(LIBS = ["copperhead"])
+
+
+extensions = []
+
+for x in ['copperhead/compiler/backendcompiler.cpp',
+          'copperhead/compiler/backendsyntax.cpp',
+          'copperhead/compiler/backendtypes.cpp']:
+    ext = cppenv.SharedLibrary(source=x,
+                               SHLIBPREFIX='',
+                               SHLIBSUFFIX='.so')
+    cppenv.Requires(ext, libcopperhead)
+    extensions.append((x, ext))
+    
+for x in ['copperhead/runtime/cudata.cpp']:
+    ext = cudaenv_host.SharedLibrary(source=[x, cudata_object],
+                                     SHLIBPREFIX='',
+                                     SHLIBSUFFIX='.so')
+    cudaenv_host.Requires(ext, libcopperhead)
+    extensions.append((x, ext))
+
+Return('extensions')

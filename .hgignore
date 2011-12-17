@@ -1,0 +1,12 @@
+syntax: glob
+
+*.pyc
+*~
+.DS_Store
+build
+stage
+dist
+.sconsign*
+distribute*.tar.gz
+setuptools*egg-info
+setuptools.pth
