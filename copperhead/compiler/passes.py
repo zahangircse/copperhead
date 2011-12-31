@@ -120,15 +120,14 @@ def xform(fn):
 #
 
 @xform
-def collect_toplevel(ast, M):
-    'Collect all top-level declarations for later reference.'
-    M.toplevel = list(S.toplevel_procedures(ast))
-    return ast
-
-@xform
 def gather_source(ast, M):
     'Gather source code for this function'
     return Front.gather_source(ast, M)
+
+@xform
+def mark_identifiers(ast, M):
+    'Mark all user-provided identifiers'
+    return Front.mark_identifiers(ast, M)
 
 @xform
 def lower_variadics(ast, M):
@@ -172,9 +171,8 @@ def protect_conditionals(ast, M):
     return Front.ConditionalProtector().rewrite(ast)
 
 @xform
-def collect_local_typings(suite, M):
-    'For each top-level procedure, collect typings of all local variables'
-    return typeinference.collect_local_typings(suite, M)
+def inline(ast, M):
+    return Front.procedure_prune(Front.inline(ast), M.entry_points)
 
 @xform
 def type_assignment(ast, M):
@@ -198,8 +196,10 @@ def make_binary(ast, M):
     return Binary.make_binary(M)
     
 
-frontend = Pipeline('frontend', [collect_toplevel,
-                                 gather_source,
+
+
+frontend = Pipeline('frontend', [gather_source,
+                                 mark_identifiers,
                                  scrub_literals,
                                  closure_conversion,
                                  single_assignment_conversion,
@@ -207,6 +207,7 @@ frontend = Pipeline('frontend', [collect_toplevel,
                                  lambda_lift,
                                  procedure_flatten,
                                  expression_flatten,
+                                 inline,
                                  lower_variadics,
                                  type_assignment,
                                  type_globalize])
@@ -217,8 +218,8 @@ binarize = Pipeline('binarize', [prepare_compilation,
                                  make_binary])
 
 to_binary = Pipeline('to_binary', [frontend,
-                                    backend,
-                                    binarize])
+                                   backend,
+                                   binarize])
 
 def run_compilation(target, suite, M):
     """

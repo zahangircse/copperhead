@@ -386,8 +386,6 @@ class SyntaxRewrite(object):
         return x
         
     def rewrite(self, x):
-        #print(x.__class__.__name__)
-        import copy
         if isinstance(x, (list, tuple)):
             return  [self.rewrite(y) for y in x]
         else:
@@ -499,5 +497,5 @@ def substituted_expression(e, env):
     rewriter = VariableSubstitute(subst)
     return rewriter.rewrite(e)
 
-def stripNull(parameters):
-    return [x for x in parameters if not isinstance(x, Null)]
+def mark_user(name):
+    return Name('_' + name.id)
